@@ -11,27 +11,47 @@
     <h4>Locacao</h4>
     <hr />
     <dl class="row">
-        <dt class = "col-sm-2">
+        <dt class="col-sm-2">
             @Html.DisplayNameFor(model => model.DataLocacao)
         </dt>
-        <dd class = "col-sm-10">
+        <dd class="col-sm-10">
             @Html.DisplayFor(model => model.DataLocacao)
         </dd>
-        <dt class = "col-sm-2">
+        <dt class="col-sm-2">
             @Html.DisplayNameFor(model => model.ValorTotal)
         </dt>
-        <dd class = "col-sm-10">
+        <dd class="col-sm-10">
             @Html.DisplayFor(model => model.ValorTotal)
         </dd>
-        <dt class = "col-sm-2">
+        <dt class="col-sm-2">
             @Html.DisplayNameFor(model => model.Cliente)
         </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Cliente.Id)
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Cliente.Nome) <!-- Exibir o nome do cliente -->
+        </dd>
+        <dt class="col-sm-2">
+            Veículos Locados
+        </dt>
+        <dd class="col-sm-10">
+            <ul>
+                @if (Model.VeiculosLocados != null && Model.VeiculosLocados.Any())
+                {
+                    foreach (var veiculoLocado in Model.VeiculosLocados)
+                    {
+                        <li>@veiculoLocado.VeiculoId</li> <!-- Exibir o nome do modelo do veículo -->
+                    }
+                }
+                else
+                {
+                    <li>Nenhum veículo locado.</li>
+                }
+            </ul>
         </dd>
     </dl>
 </div>
+
 <div>
     <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
     <a asp-action="Index">Back to List</a>
 </div>
+

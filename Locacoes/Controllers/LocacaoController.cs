@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Locacoes.Data;
 using Locacoes.Models;
+using Locacoes.Migrations;
 
 namespace Locacoes.Controllers
 {
@@ -34,9 +35,13 @@ namespace Locacoes.Controllers
                 return NotFound();
             }
 
+            // Incluindo os veículos locados junto com a locação
             var locacao = await _context.Locacoes
                 .Include(l => l.Cliente)
+                .Include(l => l.VeiculosLocados)
+                    .ThenInclude(vl => vl.Veiculo) // Aqui você pode incluir a tabela Veiculo
                 .FirstOrDefaultAsync(m => m.Id == id);
+
             if (locacao == null)
             {
                 return NotFound();
@@ -48,7 +53,13 @@ namespace Locacoes.Controllers
         // GET: Locacao/Create
         public IActionResult Create()
         {
-            ViewData["ClienteId"] = new SelectList(_context.Clientes, "Id", "Id");
+
+            var veiculos = _context.Veiculo.Include(v => v.Modelo).ToList();
+
+            ViewData["ClienteId"] = new SelectList(_context.Clientes, "Id", "Nome");
+            ViewData["VeiculoId"] = new SelectList(_context.Veiculo, "Id", "Modelo.Nome");
+
+            ViewBag.VeiculoId = new SelectList(veiculos, "Id", "Modelo.Nome");
             return View();
         }
 
@@ -57,15 +68,32 @@ namespace Locacoes.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,DataLocacao,ValorTotal,ClienteId")] Locacao locacao)
+        public async Task<IActionResult> Create([Bind("Id,DataLocacao,ValorTotal,ClienteId,VeiculoIds")] Locacao locacao)
         {
+            if (locacao.VeiculosLocados == null)
+            {
+                locacao.VeiculosLocados = new List<VeiculoLocado>();
+            }
+
+            if (locacao.VeiculoIds == null || locacao.VeiculoIds.Count == 0)
+            {
+                ModelState.AddModelError("VeiculoIds", "Você deve selecionar pelo menos um veículo.");
+            }
+
             if (ModelState.IsValid)
             {
+                foreach (var veiculoId in locacao.VeiculoIds)
+                {
+                    locacao.VeiculosLocados.Add(new VeiculoLocado { VeiculoId = veiculoId });
+                }
+
                 _context.Add(locacao);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["ClienteId"] = new SelectList(_context.Clientes, "Id", "Id", locacao.ClienteId);
+
+            ViewData["ClienteId"] = new SelectList(_context.Clientes, "Id", "Nome", locacao.ClienteId);
+            ViewData["VeiculoId"] = new SelectList(_context.Veiculo, "Id", "Modelo.Nome");
             return View(locacao);
         }
 
